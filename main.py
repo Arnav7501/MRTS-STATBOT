@@ -81,7 +81,12 @@ async def on_message(message):
             await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(old), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
         else:
             content = message.content[12:]
-            await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
+            pattern = r'^https?://(?:www\.)?pastebin\.com/[a-zA-Z0-9]+$'
+            if(re.match(pattern, content) is None):
+                await message.channel.send("i get the feeling that's not a patebin link")
+            else:
+                await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
+
 
 
 

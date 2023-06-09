@@ -5,6 +5,7 @@ import io
 import aiohttp
 from bs4 import BeautifulSoup
 import patchnotes 
+import re
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -86,8 +87,8 @@ async def on_message(message):
                 await message.channel.send("i get the feeling that's not a patebin link")
             else:
                 await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
-
-
+        if message.author.id == 263351384466784257:
+            await message.channel.send ("you know what would be cool? if you did this alread for us")
 
 
 client.run(

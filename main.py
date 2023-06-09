@@ -4,10 +4,13 @@ import requests
 import io
 import aiohttp
 from bs4 import BeautifulSoup
+import patchnotes 
 intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
+
+old = "https://pastebin.com/neCtnQfG"
 
 
 async def statScraper(unitName, message):
@@ -69,10 +72,17 @@ async def on_message(message):
 
     if message.content.startswith(';troop'):
         if message.author.id == 450840257282441257:
-            await message.channel.send('Me gusta camarones')
+            await message.channel.send('im eating shrimp right now')
         else:
             content = message.content[6:]
             await statScraper(content, message)
+    if message.content.startswith(';patchnotes'):
+        if message.length == 11:
+            await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(old), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
+        else:
+            content = message.content[12:]
+            await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
+
 
 
 client.run(

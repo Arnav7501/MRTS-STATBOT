@@ -78,7 +78,7 @@ async def on_message(message):
             content = message.content[6:]
             await statScraper(content, message)
     if message.content.startswith(';patchnotes'):
-        if message.length == 11:
+        if len(message) == 11:
             await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(old), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
         else:
             content = message.content[12:]

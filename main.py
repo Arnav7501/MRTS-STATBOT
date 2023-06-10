@@ -11,7 +11,7 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-old = "https://pastebin.com/neCtnQfG"
+old = "https://pastebin.com/raw/neCtnQfG"
 
 
 async def statScraper(unitName, message):
@@ -79,14 +79,14 @@ async def on_message(message):
             await statScraper(content, message)
     if message.content.startswith(';patchnotes'):
         if message.length == 11:
-            await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(old), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
+            await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(old), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
         else:
             content = message.content[12:]
-            pattern = r'^https?://(?:www\.)?pastebin\.com/[a-zA-Z0-9]+$'
+            pattern = r'^https?://(?:www\.)?pastebin\.com/raw/[a-zA-Z0-9]+$'
             if(re.match(pattern, content) is None):
                 await message.channel.send("i get the feeling that's not a patebin link")
             else:
-                await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/xchHf3Gp")))
+                await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
         if message.author.id == 263351384466784257:
             await message.channel.send ("you know what would be cool? if you did this alread for us")
 

@@ -3,7 +3,7 @@ import requests
 
 def TableToDict(pastebinURL):
     table = "{" + requests.get(pastebinURL).text[17:4133] + requests.get(pastebinURL).text[4163:-14] + "}"
-    table.replace("v1.", "")
+    table = table.replace("v1.", "")
     #goofy numbers since first and last 2 lines in pastebin are not relevant and same with 244-246
     return lua.decode(table)
 

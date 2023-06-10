@@ -88,7 +88,7 @@ async def on_message(message):
             else:
                 await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
         if message.author.id == 263351384466784257:
-            await message.channel.send ("you know what would be cool? if you did this alread for us")
+            await message.channel.send ("https://media.discordapp.net/attachments/728744216603131925/1115173479097041048/attachment.gif")
 
 
 client.run(

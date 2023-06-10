@@ -2,13 +2,9 @@ from slpp import slpp as lua
 import requests
 
 def TableToDict(pastebinURL):
-    table = requests.get(pastebinURL).text.split(";\n")[3,243]
-    table += requests.get(pastebinURL).text.split(";\n")[247,340] 
+    table = "{" + requests.get(pastebinURL).text[11:4127] + requests.get(pastebinURL).text[4157:-15] + "}"
     #goofy numbers since first and last 2 lines in pastebin are not relevant and same with 244-246
-    dict = {}
-    for x in table:
-        dict = dict.append(lua.decode(x))
-    return dict
+    return lua.decode(table)
 
 def PrintChanges(old, updated):
     changes = ""

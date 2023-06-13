@@ -70,7 +70,6 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
-
     if message.content.startswith(';troop'):
         if message.author.id == 450840257282441257:
             await message.channel.send('im eating shrimp right now')
@@ -89,7 +88,12 @@ async def on_message(message):
                 await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
         if message.author.id == 263351384466784257:
             await message.channel.send ("https://media.discordapp.net/attachments/728744216603131925/1115173479097041048/attachment.gif")
-
+    if message.content.startswith(';2elz'):
+        await message.channel.send("1. Lack of transparency between administration and the community\n2. Punishments without actual argumentative justification (Just states what rule youve broken instead of telling you why you broke that rule)\n3. Really shitty mods that inconsistently warn individuals without referring the prior cases of offenses and personal bias on behalf of the mods\n 4. Punishments are almost always permanent, the appeal system is nonexistant, making it nearly impossible for people to actually appeal bans and such, and nonetheless, despite what argument you make to moderation it wont matter, even if the argument is logically sound (should add a monthly reset or smth)\n5. The continuous ban of valuable players that would have helped MRTS grow as a whole\n6. Aristocracy created by the upper administration where new mods will only be vetted not on merit, but on personal bias or how well they isolate themselves from the community\n7. Lack of care by the administration to every issue, dmnks in particular isn't professional")
+    if message.content.startswith(';poem'):
+        await message.channel.send("First they came for the tc3 players, and I did not speak out—because I was not a tc3 player.\n\nThen they came for the people who didn't like dmnk's actions, and I did not speak out—because I did not do that.\n\nThen they came for the staff who disagreed with his methods, and I did not speak out—because I was not staff.\n\nThen they came for me—and there was no one left to speak for me.")
+    if 'levelz' in message.content:
+        await message.channel.send("100ratz")
 
 client.run(
     'MTExMjU2MjEzMzI0NzQ1OTQxMQ.GVSG6b.jlFML0AwkcSn6hCIvEj2mC15mdu2vp7PCoKwQ8')

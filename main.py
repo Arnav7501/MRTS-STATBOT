@@ -1,6 +1,7 @@
 # This example requires the 'message_content' intent.
 from discord.ext import tasks
 import discord
+from discord import Embed
 import requests
 import io
 import aiohttp
@@ -10,8 +11,6 @@ import re
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
-
-old = "https://pastebin.com/raw/neCtnQfG"
 
 
 async def statScraper(unitName, message):
@@ -37,20 +36,36 @@ async def statScraper(unitName, message):
         array = [line for line in content.split("\n") if line.strip()]
         images = soup.find_all('img')
         image = images[1].get('src')
+        embed = Embed()
+        embed.title = array[0]
         if array[13] == 'S-Range':
-            await message.channel.send(f"{array[0]}\n-{array[1]}\n{array[2]}: {array[5]}\n{array[3]}: {array[6]}\n{array[4]}: {array[7]}\n{array[8]}: {array[10]}\n{array[9]}: {array[11]}"
-                                       f"\n{array[12]}: {array[15]}\n{array[13]}: {array[16]}\n{array[14]}: {array[17]}\n{array[18]}: {array[20]}\n{array[19]}: {array[21]}\n{array[22]}: {array[23]}")
-        else:
-            await message.channel.send(f"{array[0]}\n-{array[1]}\n{array[2]}: {array[5]}\n{array[3]}: {array[6]}\n{array[4]}: {array[7]}\n{array[8]}: {array[10]}\n{array[9]}: {array[11]}"
-                                       f"\n{array[12]}: {array[14]}\n{array[13]}: {array[15]}\n{array[16]}: {array[18]}\n{array[17]}: {array[19]}\n{array[20]}: {array[21]}")
+            embed.add_field(name=array[2], value=array[5])
+            embed.add_field(name=array[3], value=array[6])
+            embed.add_field(name=array[4], value=array[7])
+            embed.add_field(name=array[8], value=array[10])
+            embed.add_field(name=array[9], value=array[11])
+            embed.add_field(name=array[12], value=array[15])
+            embed.add_field(name=array[13], value=array[16])
+            embed.add_field(name=array[14], value=array[17])
+            embed.add_field(name=array[18], value=array[20])
+            embed.add_field(name=array[19], value=array[21])
+            embed.add_field(name=array[22], value=array[23])
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(image) as response:
-                if response.status == 200:
-                    image_bytes = await response.read()
-                    await message.channel.send(file=discord.File(io.BytesIO(image_bytes), 'image.png'))
-                else:
-                    await message.channel.send("Failed to fetch the image.")
+        else:
+            embed.add_field(name=array[2], value=array[5])
+            embed.add_field(name=array[3], value=array[6])
+            embed.add_field(name=array[4], value=array[7])
+            embed.add_field(name=array[8], value=array[10])
+            embed.add_field(name=array[9], value=array[11])
+            embed.add_field(name=array[12], value=array[14])
+            embed.add_field(name=array[13], value=array[15])
+            embed.add_field(name=array[16], value=array[18])
+            embed.add_field(name=array[17], value=array[19])
+            embed.add_field(name=array[20], value=array[21])
+
+        embed.set_image(url=image)
+        await message.channel.send(embed=embed)
+
     except Exception as e:
        # await message.channel.send(f"ERROR, {e}")
         await message.channel.send("Something went wrong. You may be entering the wrong name, or attempting to get information on a special unit, which is not supported yet.")
@@ -61,10 +76,12 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
     check_patchnotes.start()
 
+old = "https://pastebin.com/raw/xchHf3Gp"
+
 
 @tasks.loop(hours=1)  # Set the interval to 1 hour
 async def check_patchnotes():
-    print("here")
+    global old
     variable = patchnotes.PrintChanges(patchnotes.TableToDict(
         old), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp"))
     if len(variable) > 0:
@@ -79,11 +96,9 @@ async def on_message(message):
         return
 
     if message.content.startswith(';troop'):
-        if message.author.id == 450840257282441257:
-            await message.channel.send('im eating shrimp right now')
-        else:
-            content = message.content[6:]
-            await statScraper(content, message)
+        content = message.content[6:]
+        await statScraper(content, message)
+
     if message.content.startswith(';patchnotes'):
         if len(message.content) == 11:
             await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(old), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
@@ -99,4 +114,4 @@ async def on_message(message):
 
 
 client.run(
-    'MTExMjU2MjEzMzI0NzQ1OTQxMQ.Go0RoZ.rj4V0Q6750mZC7YGL4wskwnStN2Jd1QbUEyzNs')
+    '')

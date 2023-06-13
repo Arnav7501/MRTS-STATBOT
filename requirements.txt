@@ -2,4 +2,3 @@ discord.py
 bs4
 requests
 slpp
-re

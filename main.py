@@ -6,12 +6,17 @@ import requests
 from bs4 import BeautifulSoup
 import patchnotes
 import re
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+APIKEY = os.getenv('APIKEY')
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
 
-async def statScraper(unitName, message):
+def scrape_wiki(unitName):
     try:
         url = f"https://mrts.fandom.com/wiki/{unitName}"
 
@@ -34,39 +39,47 @@ async def statScraper(unitName, message):
         array = [line for line in content.split("\n") if line.strip()]
         images = soup.find_all('img')
         image = images[1].get('src')
-        embed = Embed()
-        embed.title = array[0]
-        if array[13] == 'S-Range':
-            embed.add_field(name=array[2], value=array[5])
-            embed.add_field(name=array[3], value=array[6])
-            embed.add_field(name=array[4], value=array[7])
-            embed.add_field(name=array[8], value=array[10])
-            embed.add_field(name=array[9], value=array[11])
-            embed.add_field(name=array[12], value=array[15])
-            embed.add_field(name=array[13], value=array[16])
-            embed.add_field(name=array[14], value=array[17])
-            embed.add_field(name=array[18], value=array[20])
-            embed.add_field(name=array[19], value=array[21])
-            embed.add_field(name=array[22], value=array[23])
-
-        else:
-            embed.add_field(name=array[2], value=array[5])
-            embed.add_field(name=array[3], value=array[6])
-            embed.add_field(name=array[4], value=array[7])
-            embed.add_field(name=array[8], value=array[10])
-            embed.add_field(name=array[9], value=array[11])
-            embed.add_field(name=array[12], value=array[14])
-            embed.add_field(name=array[13], value=array[15])
-            embed.add_field(name=array[16], value=array[18])
-            embed.add_field(name=array[17], value=array[19])
-            embed.add_field(name=array[20], value=array[21])
-
-        embed.set_image(url=image)
-        await message.channel.send(embed=embed)
+        array.append(image)
+        return array
 
     except Exception as e:
-       # await message.channel.send(f"ERROR, {e}")
-        await message.channel.send("Something went wrong. You may be entering the wrong name, or attempting to get information on a special unit, which is not supported yet.")
+        return 1
+
+
+async def statScraper(unitName, message):
+    array = scrape_wiki(unitName)
+    image = array[-1]
+    embed = Embed()
+    embed.title = array[0]
+    if array[13] == 'S-Range':
+        embed.add_field(name=array[2], value=array[5])
+        embed.add_field(name=array[3], value=array[6])
+        embed.add_field(name=array[4], value=array[7])
+        embed.add_field(name=array[8], value=array[10])
+        embed.add_field(name=array[9], value=array[11])
+        embed.add_field(name=array[12], value=array[15])
+        embed.add_field(name=array[13], value=array[16])
+        embed.add_field(name=array[14], value=array[17])
+        embed.add_field(name=array[18], value=array[20])
+        embed.add_field(name=array[19], value=array[21])
+        embed.add_field(name=array[22], value=array[23])
+
+    else:
+        embed.add_field(name=array[2], value=array[5])
+        embed.add_field(name=array[3], value=array[6])
+        embed.add_field(name=array[4], value=array[7])
+        embed.add_field(name=array[8], value=array[10])
+        embed.add_field(name=array[9], value=array[11])
+        embed.add_field(name=array[12], value=array[14])
+        embed.add_field(name=array[13], value=array[15])
+        embed.add_field(name=array[16], value=array[18])
+        embed.add_field(name=array[17], value=array[19])
+        embed.add_field(name=array[20], value=array[21])
+
+    embed.set_image(url=image)
+    await message.channel.send(embed=embed)
+
+   # await message.channel.send(f"ERROR, {e}")
 
 
 @client.event
@@ -99,6 +112,37 @@ async def on_message(message):
         content = message.content[6:]
         await statScraper(content, message)
 
+    if message.content.startswith(';rankdps'):
+        singleTargetArray = ["Archer", "Swordman",
+                             "Knight", "Longbower", "Crossbower", "Ballista"]
+        splashArray = ["Mage", "Wizard", "Catapult"]
+        singleTargetDictionary = {}
+        splashTargetDictionary = {}
+        for i in range(len(singleTargetArray)):
+            tempValue = scrape_wiki(singleTargetArray[i])
+            singleTargetDictionary[tempValue[0]] = tempValue[21]
+        sorted_dict = dict(
+            sorted(singleTargetDictionary.items(), key=lambda x: x[1]))
+        print("SORTED_DICT", sorted_dict)
+        embed = Embed()
+        embed.title = "Single Target"
+
+        for key in sorted_dict:
+            embed.add_field(name=key, value=sorted_dict[key], inline=False)
+        await message.channel.send(embed=embed)
+
+        for i in range(len(splashArray)):
+            tempValue = scrape_wiki(splashArray[i])
+            splashTargetDictionary[tempValue[0]] = tempValue[23]
+        sorted_dict = dict(
+            sorted(splashTargetDictionary.items(), key=lambda x: x[1]))
+        print("SORTED_DICT", sorted_dict)
+        embed = Embed()
+        embed.title = "Splash Target"
+        for key in sorted_dict:
+            embed.add_field(name=key, value=sorted_dict[key], inline=False)
+        await message.channel.send(embed=embed)
+
     if message.content.startswith(';patchnotes'):
         if len(message.content) == 11:
             await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(old), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
@@ -114,4 +158,4 @@ async def on_message(message):
 
 
 client.run(
-    'MTExMjU2MjEzMzI0NzQ1OTQxMQ.G6b-7u.61dPzVnv07-X7bPG2GI9CKUF3dEX-yqcgkOsbc')
+    APIKEY)

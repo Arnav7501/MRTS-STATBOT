@@ -3,8 +3,6 @@ from discord.ext import tasks
 import discord
 from discord import Embed
 import requests
-import io
-import aiohttp
 from bs4 import BeautifulSoup
 import patchnotes
 import re
@@ -77,17 +75,19 @@ async def on_ready():
     check_patchnotes.start()
 
 old = "https://pastebin.com/raw/xchHf3Gp"
+old = patchnotes.TableToDict(old)
 
 
 @tasks.loop(hours=1)  # Set the interval to 1 hour
 async def check_patchnotes():
     global old
-    variable = patchnotes.PrintChanges(patchnotes.TableToDict(
-        old), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp"))
+    variable = patchnotes.PrintChanges(
+        old, patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp"))
     if len(variable) > 0:
         channel = client.get_channel(1109558632292556903)
         await channel.send(variable)
-        old = "https://pastebin.com/raw/xchHf3Gp"
+        old = patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")
+        await channel.send("DMNKS has changed some stats <@763582841866682368> <@246824672367345674> <@621516858205405197>")
 
 
 @client.event
@@ -114,4 +114,4 @@ async def on_message(message):
 
 
 client.run(
-    '')
+    'MTExMjU2MjEzMzI0NzQ1OTQxMQ.G6b-7u.61dPzVnv07-X7bPG2GI9CKUF3dEX-yqcgkOsbc')

@@ -9,6 +9,9 @@ import re
 import os
 from dotenv import load_dotenv
 
+from rank import rankingList
+from elo import eloSystem, calculateEloRating, getUserInfo
+from wikiscraper import scrape_wiki
 load_dotenv()
 APIKEY = os.getenv('APIKEY')
 intents = discord.Intents.default()
@@ -16,37 +19,8 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 
 
-def scrape_wiki(unitName):
-    try:
-        url = f"https://mrts.fandom.com/wiki/{unitName}"
-
-    # Send a GET request to fetch the HTML content
-        response = requests.get(url)
-
-# Create a BeautifulSoup object to parse the HTML
-        soup = BeautifulSoup(response.content, "html.parser")
-
-# Extract the desired information
-
-
-# Print the extracted information
-
-        td_tag = soup.find("div", class_="mw-parser-output")
-
-# Extract the text content of the td tag
-        content = td_tag.text.strip() if td_tag else None
-
-        array = [line for line in content.split("\n") if line.strip()]
-        images = soup.find_all('img')
-        image = images[1].get('src')
-        array.append(image)
-        return array
-
-    except Exception as e:
-        return 1
-
-
 async def statScraper(unitName, message):
+    array = []
     array = scrape_wiki(unitName)
     image = array[-1]
     embed = Embed()
@@ -86,6 +60,7 @@ async def statScraper(unitName, message):
 async def on_ready():
     print(f'We have logged in as {client.user}')
     check_patchnotes.start()
+    # eloSystem("test", 1000)
 
 old = "https://pastebin.com/raw/xchHf3Gp"
 old = patchnotes.TableToDict(old)
@@ -112,35 +87,65 @@ async def on_message(message):
         content = message.content[6:]
         await statScraper(content, message)
 
-    if message.content.startswith(';rankdps'):
-        singleTargetArray = ["Archer", "Swordman",
-                             "Knight", "Longbower", "Crossbower", "Ballista"]
-        splashArray = ["Mage", "Wizard", "Catapult"]
-        singleTargetDictionary = {}
-        splashTargetDictionary = {}
-        for i in range(len(singleTargetArray)):
-            tempValue = scrape_wiki(singleTargetArray[i])
-            singleTargetDictionary[tempValue[0]] = tempValue[21]
-        sorted_dict = dict(
-            sorted(singleTargetDictionary.items(), key=lambda x: x[1]))
-        print("SORTED_DICT", sorted_dict)
-        embed = Embed()
-        embed.title = "Single Target"
+    if message.content.startswith(';elo'):
+        content = message.content[4:]
+        two_users = []
+        both_userids = []
+        # getting elos of both players, if the player doesn't exist we give them a default elo of 100
+        if message.mentions:
+            for user in message.mentions:
+                user_id = user.id
+                both_userids.append(user_id)
+                if getUserInfo(str(user_id)) == False:
+                    eloSystem(str(user_id), 100)
+                    two_users.append(100)
+                else:
+                    print(getUserInfo(str(user_id)))
+                    two_users.append(getUserInfo(str(user_id)))
 
-        for key in sorted_dict:
-            embed.add_field(name=key, value=sorted_dict[key], inline=False)
+        if message.content.split(" ")[3] == "win":
+            eloCounterPlayerOne = 1
+            eloCounterPlayerTwo = 0
+        else:
+            eloCounterPlayerOne = 0
+            eloCounterPlayerTwo = 1
+
+        valuePlayerOne = calculateEloRating(
+            two_users[0], two_users[1], eloCounterPlayerOne)
+
+        valuePlayerTwo = calculateEloRating(
+            two_users[1], two_users[0], eloCounterPlayerTwo)
+
+        eloSystem(str(both_userids[0]), valuePlayerOne)
+        eloSystem(str(both_userids[0]), valuePlayerTwo)
+
+        valuePlayerTwo = calculateEloRating(
+            two_users[1], two_users[0], eloCounterPlayerTwo)
+        await message.channel.send(f"<@{both_userids[0]}> your new elo is {valuePlayerOne}, other player's elo is {valuePlayerTwo}")
+    if message.content.startswith(";help"):
+        embed = Embed()
+        embed.title = "Help"
+        embed.add_field(
+            name=";troop", value="Displays the stats of a troop", inline=False)
+        embed.add_field(
+            name=";elo", value="Calculates the elo of a player", inline=False)
+        embed.add_field(name=";rankdps",
+                        value="Displays the top single target troops by dps", inline=False)
+        embed.add_field(name=";leaderboard",
+                        value="Displays the leaderboard", inline=False)
+        await message.channel.send(embed=embed)
+    if message.content.startswith(';rankdps'):
+        embed = rankingList()
         await message.channel.send(embed=embed)
 
-        for i in range(len(splashArray)):
-            tempValue = scrape_wiki(splashArray[i])
-            splashTargetDictionary[tempValue[0]] = tempValue[23]
-        sorted_dict = dict(
-            sorted(splashTargetDictionary.items(), key=lambda x: x[1]))
-        print("SORTED_DICT", sorted_dict)
+    if message.content.startswith(';leaderboard'):
         embed = Embed()
-        embed.title = "Splash Target"
-        for key in sorted_dict:
-            embed.add_field(name=key, value=sorted_dict[key], inline=False)
+        embed.title = "Leaderboard"
+        table = getUserInfo("all")
+        for row in table:
+            user = await client.fetch_user(row[0])
+            username = user.name
+            embed.add_field(name=username, value=row[1], inline=False)
         await message.channel.send(embed=embed)
 
     if message.content.startswith(';patchnotes'):

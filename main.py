@@ -86,6 +86,10 @@ async def on_message(message):
     if message.content.startswith(';troop'):
         content = message.content[6:]
         await statScraper(content, message)
+    
+    if message.content.startswith(';setchannel'):
+        content = message.content[12:]
+        await message.channel.send(setChannel(content))
 
     if message.content.startswith(';elo'):
         content = message.content[4:]

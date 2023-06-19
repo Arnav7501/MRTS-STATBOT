@@ -30,33 +30,26 @@ def PrintChanges(old, updated):
 def checkAttribute(old, updated, thing, attribute):
     changes = ""
     if attribute in updated[thing]:
-        try:
-            if old[thing][attribute] != updated[thing][attribute]:
-                match checkInverse(attribute):
-                    case 1:
-                        changes += f"+ {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}\n"
-                    case -1:
-                        changes += f"- {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}\n"
-                    case 0:
-                        changes += f"\* {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}"
-
-        except KeyError as e:
-            print(f"KeyError: {e}")
-            print(f"x: {thing}, y: {attribute}")
-            print(
-                f"Keys in old[x]: {old[thing].keys() if thing in old else 'x not in old'}")
-            print(
-                f"Keys in updated[x]: {updated[thing].keys() if thing in updated else 'x not in updated'}")
+        if old[thing][attribute] != updated[thing][attribute]:
+            changes += f"{isGood(attribute, old[thing][attribute], new[thing][attribute])} {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}\n"
     else:
         changes += f"* {attribute} from {thing} removed"
-
     return changes
 
-
-def checkInverse(attribute):
-    if attribute in inverse:
-        return 1
-    elif attribute in verse:
-        return -1
+def isGood(attribute, old, new):
+    sign = ""
+    if new > old:
+        if attribute in inverse:
+            sign = "+"
+        elif attribute in verse:
+            sign = "-"
+        else:
+            sign = "\*"
     else:
-        return 0
+        if attribute in inverse:
+            sign = "-"
+        elif attribute in verse:
+            sign = "+"
+        else:
+            sign = "\*"
+    return sign

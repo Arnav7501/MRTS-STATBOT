@@ -3,7 +3,7 @@ import requests
 
 
 def TableToDict(pastebinURL):
-    table = "{" + requests.get(pastebinURL).text[17:-14] + "}"
+    table = "{" + requests.get(pastebinURL).text[18:-14] + "}"
     table = table.replace("v1.", "")
     table = table.replace("v1", "")
     table = table.replace("\r\n\t--// Buildings //--\r\n\r\n", "")

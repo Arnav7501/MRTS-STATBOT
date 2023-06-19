@@ -1,8 +1,10 @@
 from slpp import slpp as lua
 import requests
 
-inverse = {"Damage", "MaxHealth", "Range", "Speed", "SplashRange", "AddHealth", "AddBuildings", "GiveCash", "AddUnits"}
+inverse = {"Damage", "MaxHealth", "Range", "Speed", "SplashRange",
+           "AddHealth", "AddBuildings", "GiveCash", "AddUnits"}
 verse = {"Cost", "Space", "Time", "Rate"}
+
 
 def TableToDict(pastebinURL):
     table = "{" + requests.get(pastebinURL).text[18:-14] + "}"
@@ -23,6 +25,7 @@ def PrintChanges(old, updated):
         else:
             changes += f"* {thing} removed\n"
     return changes
+
 
 def checkAttribute(old, updated, thing, attribute):
     changes = ""

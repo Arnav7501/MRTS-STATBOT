@@ -34,6 +34,8 @@ def checkAttribute(old, updated, thing, attribute):
             changes += f"{isGood(attribute, old[thing][attribute], new[thing][attribute])} {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}\n"
     else:
         changes += f"* {attribute} from {thing} removed"
+    if len(changes) > 0:
+        changes = "```" + changes + "```"
     return changes
 
 def isGood(attribute, old, new):

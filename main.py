@@ -1,69 +1,81 @@
 # This example requires the 'message_content' intent.
-from discord.ext import tasks
+from discord.ext import tasks, commands
 import discord
 from discord import Embed
-import requests
-from bs4 import BeautifulSoup
 import patchnotes
 import re
 import os
 from dotenv import load_dotenv
-
-from rank import rankingList
+import datetime
+from rank import rankingList, splashRankingList
 from elo import eloSystem, calculateEloRating, getUserInfo
 from wikiscraper import scrape_wiki
+from reactionmenu import ReactionMenu, ReactionButton
+
 load_dotenv()
 APIKEY = os.getenv('APIKEY')
 intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 
+bot = commands.Bot(command_prefix=';', intents=intents)
+
 
 async def statScraper(unitName, message):
-    array = []
-    array = scrape_wiki(unitName)
-    image = array[-1]
+    unitName = unitName.title()
+    unitDict = patchnotes.TableToDict(
+        "https://pastebin.com/raw/xchHf3Gp")[unitName]
     embed = Embed()
-    embed.title = array[0]
-    if array[13] == 'S-Range':
-        embed.add_field(name=array[2], value=array[5])
-        embed.add_field(name=array[3], value=array[6])
-        embed.add_field(name=array[4], value=array[7])
-        embed.add_field(name=array[8], value=array[10])
-        embed.add_field(name=array[9], value=array[11])
-        embed.add_field(name=array[12], value=array[15])
-        embed.add_field(name=array[13], value=array[16])
-        embed.add_field(name=array[14], value=array[17])
-        embed.add_field(name=array[18], value=array[20])
-        embed.add_field(name=array[19], value=array[21])
-        embed.add_field(name=array[22], value=array[23])
-
-    else:
-        embed.add_field(name=array[2], value=array[5])
-        embed.add_field(name=array[3], value=array[6])
-        embed.add_field(name=array[4], value=array[7])
-        embed.add_field(name=array[8], value=array[10])
-        embed.add_field(name=array[9], value=array[11])
-        embed.add_field(name=array[12], value=array[14])
-        embed.add_field(name=array[13], value=array[15])
-        embed.add_field(name=array[16], value=array[18])
-        embed.add_field(name=array[17], value=array[19])
-        embed.add_field(name=array[20], value=array[21])
-
-    embed.set_image(url=image)
+    embed.title = unitName
+    for key in unitDict:
+        embed.add_field(name=key, value=unitDict[key])
+    try:
+        embed.add_field(name="Damage per second", value=round(float(
+            unitDict["Damage"]/unitDict["Rate"]), 2))
+    except:
+        pass
     await message.channel.send(embed=embed)
 
-   # await message.channel.send(f"ERROR, {e}")
 
-
-@client.event
+@bot.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
-    check_patchnotes.start()
-    # eloSystem("test", 1000)
 
-old = "https://pastebin.com/raw/xchHf3Gp"
-old = patchnotes.TableToDict(old)
+    print(f'We have logged in as {bot.user}')
+    check_patchnotes.start()
+
+
+old = patchnotes.TableToDict(
+    "https://pastebin.com/raw/xchHf3Gp")
+
+
+@bot.command()
+async def leaderboard(ctx):
+    embed = Embed()
+    menu = ReactionMenu(ctx, menu_type=ReactionMenu.TypeEmbed)
+    embed.title = "Leaderboard"
+    table = getUserInfo("all")
+    array = {}
+    for row in table:
+        user = await bot.fetch_user(row[0])
+        username = user.name
+        array[username] = row[1]
+        sorted_dict = dict(
+            sorted(array.items(), key=lambda x: x[1], reverse=True))
+        print(sorted_dict)
+    counter = 0
+    for key in sorted_dict:
+        if counter % 5 != 0:
+            embed.add_field(name=key, value=sorted_dict[key], inline=False)
+        else:
+            embed.add_field(name=key, value=sorted_dict[key], inline=False)
+            menu.add_page(embed)
+        counter += 1
+
+    menu.add_button(ReactionButton.back())
+    menu.add_button(ReactionButton.next())
+    menu.add_button(ReactionButton.end_session())
+
+    await menu.start(send_to=ctx.channel)
 
 
 @tasks.loop(hours=1)  # Set the interval to 1 hour
@@ -71,22 +83,28 @@ async def check_patchnotes():
     global old
     variable = patchnotes.PrintChanges(
         old, patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp"))
-    if len(variable) > 0:
-        channel = client.get_channel(1109558632292556903)
+    if (len(variable) > 0):
+        channel = bot.get_channel(1109558632292556903)
         await channel.send(variable)
         old = patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")
         await channel.send("DMNKS has changed some stats <@763582841866682368> <@246824672367345674> <@621516858205405197>")
 
+cooldowns = {}
 
-@client.event
+
+@bot.event
 async def on_message(message):
-    if message.author == client.user:
-        return
+    current_time = datetime.datetime.now()
+
+    if message.author.id in cooldowns and message.content.startswith(';'):
+        time_difference = current_time - cooldowns[message.author.id]
+        if time_difference.total_seconds() < 5:
+            await message.channel.send("You're on cooldown")
+            return
+        content = message.content[7:]
 
     if message.content.startswith(';troop'):
-        content = message.content[6:]
         await statScraper(content, message)
-
     if message.content.startswith(';elo'):
         content = message.content[4:]
         two_users = []
@@ -100,7 +118,6 @@ async def on_message(message):
                     eloSystem(str(user_id), 100)
                     two_users.append(100)
                 else:
-                    print(getUserInfo(str(user_id)))
                     two_users.append(getUserInfo(str(user_id)))
 
         if message.content.split(" ")[3] == "win":
@@ -126,27 +143,20 @@ async def on_message(message):
         embed = Embed()
         embed.title = "Help"
         embed.add_field(
-            name=";troop", value="Displays the stats of a troop", inline=False)
+            name=";troop", value="Displays the stats of a troop, eg ;troop wizard", inline=False)
         embed.add_field(
-            name=";elo", value="Calculates the elo of a player", inline=False)
-        embed.add_field(name=";rankdps",
-                        value="Displays the top single target troops by dps", inline=False)
+            name=";elo @player1 @player2 match_result", value="Calculates the elo of a player. If i beat a player named Shrimp, command would be ;elo @arnav @shrimp win. Note that any false uses of this command will result in instant termination to your access to the bot and possible further consequences. Report any false runs to @arnav1977 so he can revoke the abuser's access. ", inline=False)
+        embed.add_field(name=";rank type",
+                        value="Displays the top troops by the selected value (dps, health, speed). Note that splash target DPS cannot be compared to single target due to their area of effect.", inline=False)
         embed.add_field(name=";leaderboard",
-                        value="Displays the leaderboard", inline=False)
+                        value="Displays the leaderboard of the top players by elo.", inline=False)
         await message.channel.send(embed=embed)
-    if message.content.startswith(';rankdps'):
-        embed = rankingList()
+    if message.content.startswith(';rank'):
+        param = message.content[6:]
+        embed = rankingList(param)
+        embed2 = splashRankingList(param)
         await message.channel.send(embed=embed)
-
-    if message.content.startswith(';leaderboard'):
-        embed = Embed()
-        embed.title = "Leaderboard"
-        table = getUserInfo("all")
-        for row in table:
-            user = await client.fetch_user(row[0])
-            username = user.name
-            embed.add_field(name=username, value=row[1], inline=False)
-        await message.channel.send(embed=embed)
+        await message.channel.send(embed=embed2)
 
     if message.content.startswith(';patchnotes'):
         if len(message.content) == 11:
@@ -159,8 +169,10 @@ async def on_message(message):
             else:
                 await message.channel.send(patchnotes.PrintChanges(patchnotes.TableToDict(content), patchnotes.TableToDict("https://pastebin.com/raw/xchHf3Gp")))
         if message.author.id == 263351384466784257:
-            await message.channel.send("you know what would be cool? if you did this alread for us")
+            await message.channel.send("you know what would be cool? if you did this already for us")
 
+    cooldowns[message.author.id] = current_time
 
-client.run(
+    await bot.process_commands(message)
+bot.run(
     APIKEY)

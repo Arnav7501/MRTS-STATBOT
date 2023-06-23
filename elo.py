@@ -18,7 +18,6 @@ def getUserInfo(username):
     select_query = conn.execute("SELECT * FROM Rankings")
     if username == "all":
         return select_query
-
     for row in select_query:
         if row[0] == username:
             return row[1]
@@ -51,8 +50,9 @@ def eloSystem(username, value):
             cursor.execute(
                 f"INSERT INTO Rankings (name, eloValue) VALUES (?, ?)", (username, value))
         else:
+            print(value, username)
             cursor.execute(
-                f"UPDATE Rankings set eloValue = ? where name = ?", (value, str(username)))
+                f"UPDATE Rankings set eloValue = ? where name = ?", (value, username))
         print("executed")
       #
         conn.commit()

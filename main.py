@@ -44,10 +44,6 @@ async def on_ready():
     check_patchnotes.start()
 
 
-old = patchnotes.TableToDict(
-    "https://pastebin.com/raw/xchHf3Gp")
-
-
 @bot.command()
 async def leaderboard(ctx):
     embed = Embed()
@@ -59,17 +55,22 @@ async def leaderboard(ctx):
         user = await bot.fetch_user(row[0])
         username = user.name
         array[username] = row[1]
+        print(username, row[1])
         sorted_dict = dict(
             sorted(array.items(), key=lambda x: x[1], reverse=True))
-        print(sorted_dict)
-    counter = 0
+    counter = 1
     for key in sorted_dict:
         if counter % 5 != 0:
             embed.add_field(name=key, value=sorted_dict[key], inline=False)
         else:
             embed.add_field(name=key, value=sorted_dict[key], inline=False)
             menu.add_page(embed)
+            embed = Embed()
+            print(menu)
         counter += 1
+
+    if counter % 5 != 0:
+        menu.add_page(embed)
 
     menu.add_button(ReactionButton.back())
     menu.add_button(ReactionButton.next())
@@ -78,7 +79,11 @@ async def leaderboard(ctx):
     await menu.start(send_to=ctx.channel)
 
 
-@tasks.loop(hours=1)  # Set the interval to 1 hour
+old = patchnotes.TableToDict(
+    "https://pastebin.com/raw/xchHf3Gp")
+
+
+@tasks.loop(minutes=1)  # Set the interval to 1 hour
 async def check_patchnotes():
     global old
     variable = patchnotes.PrintChanges(
@@ -98,7 +103,7 @@ async def on_message(message):
 
     if message.author.id in cooldowns and message.content.startswith(';'):
         time_difference = current_time - cooldowns[message.author.id]
-        if time_difference.total_seconds() < 5:
+        if time_difference.total_seconds() < 10:
             await message.channel.send("You're on cooldown")
             return
         content = message.content[7:]
@@ -106,39 +111,40 @@ async def on_message(message):
     if message.content.startswith(';troop'):
         await statScraper(content, message)
     if message.content.startswith(';elo'):
-        content = message.content[4:]
-        two_users = []
-        both_userids = []
-        # getting elos of both players, if the player doesn't exist we give them a default elo of 100
-        if message.mentions:
-            for user in message.mentions:
-                user_id = user.id
-                both_userids.append(user_id)
-                if getUserInfo(str(user_id)) == False:
-                    eloSystem(str(user_id), 100)
-                    two_users.append(100)
-                else:
-                    two_users.append(getUserInfo(str(user_id)))
+        if message.channel.id == 1120485682369007757:
+            content = message.content[4:]
+            two_users = []
+            both_userids = []
+            # getting elos of both players, if the player doesn't exist we give them a default elo of 100
+            if message.mentions:
+                for user in message.mentions:
+                    user_id = user.id
+                    both_userids.append(user_id)
+                    if getUserInfo(str(user_id)) == False:
+                        eloSystem(str(user_id), 100)
+                        two_users.append(100)
+                    else:
+                        two_users.append(getUserInfo(str(user_id)))
 
-        if message.content.split(" ")[3] == "win":
-            eloCounterPlayerOne = 1
-            eloCounterPlayerTwo = 0
+            if message.content.split(" ")[3] == "win":
+                eloCounterPlayerOne = 1
+                eloCounterPlayerTwo = 0
+            else:
+                eloCounterPlayerOne = 0
+                eloCounterPlayerTwo = 1
+
+            valuePlayerOne = calculateEloRating(
+                two_users[0], two_users[1], eloCounterPlayerOne)
+
+            valuePlayerTwo = calculateEloRating(
+                two_users[1], two_users[0], eloCounterPlayerTwo)
+
+            eloSystem(str(both_userids[0]), valuePlayerOne)
+            eloSystem(str(both_userids[1]), valuePlayerTwo)
+
+            await message.channel.send(f"<@{both_userids[0]}> your new elo is {valuePlayerOne}, other player's elo is {valuePlayerTwo}")
         else:
-            eloCounterPlayerOne = 0
-            eloCounterPlayerTwo = 1
-
-        valuePlayerOne = calculateEloRating(
-            two_users[0], two_users[1], eloCounterPlayerOne)
-
-        valuePlayerTwo = calculateEloRating(
-            two_users[1], two_users[0], eloCounterPlayerTwo)
-
-        eloSystem(str(both_userids[0]), valuePlayerOne)
-        eloSystem(str(both_userids[0]), valuePlayerTwo)
-
-        valuePlayerTwo = calculateEloRating(
-            two_users[1], two_users[0], eloCounterPlayerTwo)
-        await message.channel.send(f"<@{both_userids[0]}> your new elo is {valuePlayerOne}, other player's elo is {valuePlayerTwo}")
+            await message.channel.send("Wrong channel, try matchmaking")
     if message.content.startswith(";help"):
         embed = Embed()
         embed.title = "Help"

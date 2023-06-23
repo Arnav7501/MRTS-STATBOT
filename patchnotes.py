@@ -11,8 +11,6 @@ def TableToDict(pastebinURL):
     table = table.replace("v1.", "")
     table = table.replace("v1", "")
     table = table.replace("\r\n\t--// Buildings //--\r\n\r\n", "")
-
-    # goofy numbers since first and last 2 lines in pastebin are not relevant and same with 244-246
     return lua.decode(table)
 
 
@@ -24,39 +22,41 @@ def PrintChanges(old, updated):
                 changes += checkAttribute(old, updated, thing, attribute)
         else:
             changes += f"* {thing} removed\n"
+    if len(changes) > 0:
+        changes = "```" + changes + "```"
     return changes
 
 
 def checkAttribute(old, updated, thing, attribute):
     changes = ""
     if attribute in updated[thing]:
-        try:
-            if old[thing][attribute] != updated[thing][attribute]:
-                match checkInverse(attribute):
-                    case 1:
-                        changes += f"+ {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}\n"
-                    case -1:
-                        changes += f"- {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}\n"
-                    case 0:
-                        changes += f"\* {thing}'s {attribute} changed from {old[thing][attribute]} to {updated[thing][attribute]}"
-
-        except KeyError as e:
-            print(f"KeyError: {e}")
-            print(f"x: {thing}, y: {attribute}")
-            print(
-                f"Keys in old[x]: {old[thing].keys() if thing in old else 'x not in old'}")
-            print(
-                f"Keys in updated[x]: {updated[thing].keys() if thing in updated else 'x not in updated'}")
+        if old[thing][attribute] != updated[thing][attribute]:
+            sign = isGood(attribute, old[thing][attribute], updated[thing][attribute])
+            signWord = "changed"
+            match sign:
+                case "+":
+                    signWord = "increased"
+                case "-":
+                    signWord = "decreased"
+            changes += f"{sign} {thing}'s {attribute} {signWord} from {old[thing][attribute]} to {updated[thing][attribute]}\n"
     else:
         changes += f"* {attribute} from {thing} removed"
-
     return changes
 
-
-def checkInverse(attribute):
-    if attribute in inverse:
-        return 1
-    elif attribute in verse:
-        return -1
+def isGood(attribute, old, new):
+    sign = ""
+    if new > old:
+        if attribute in inverse:
+            sign = "+"
+        elif attribute in verse:
+            sign = "-"
+        else:
+            sign = "\*"
     else:
-        return 0
+        if attribute in inverse:
+            sign = "-"
+        elif attribute in verse:
+            sign = "+"
+        else:
+            sign = "\*"
+    return sign
